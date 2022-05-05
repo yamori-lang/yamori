@@ -36,7 +36,7 @@ impl Interner {
         if i < self.strings.len() {
             self.strings.get(i).as_slice()
         } else {
-            fail!("Invalid InternedStr {}", i)
+            panic!("Invalid InternedStr {}", i)
         }
     }
 }

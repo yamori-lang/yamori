@@ -79,7 +79,7 @@ impl<'a> Parser<'a> {
                 self.lexer.next();
                 let id = match *expect!(self, TIdentifier(..)) {
                     TIdentifier(id) => id,
-                    _ => fail!(),
+                    _ => panic!(),
                 };
                 expect!(self, TAssign);
                 let expr = self.expression()?;
@@ -207,7 +207,7 @@ mod tests {
     fn operators() {
         let mut buffer = BufReader::new("1 / 4 + (2 - 3) * 2".as_bytes());
         let mut parser = Parser::new(&mut buffer);
-        let expr = parser.expression().unwrap_or_else(|err| fail!(err));
+        let expr = parser.expression().unwrap_or_else(|err| panic!("{err}"));
         assert_eq!(
             expr,
             binop(
@@ -221,7 +221,7 @@ mod tests {
     fn block() {
         let mut buffer = BufReader::new("1 / { let x = 2; x }".as_bytes());
         let mut parser = Parser::new(&mut buffer);
-        let expr = parser.expression().unwrap_or_else(|err| fail!(err));
+        let expr = parser.expression().unwrap_or_else(|err| panic!("{err}"));
         assert_eq!(
             expr,
             binop(int(1), "/", Block(vec!(let_("x", int(2)), id("x"))))

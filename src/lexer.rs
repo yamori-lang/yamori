@@ -293,7 +293,7 @@ impl<'a> Lexer<'a> {
         match self.read_char() {
           Some('"') => return TString(self.intern(self.current_str())),
           Some(x) => (),
-          None => fail!("Unexpected EOF"),
+          None => panic!("Unexpected EOF"),
         }
       }
     } else if c == '\'' {
@@ -302,10 +302,10 @@ impl<'a> Lexer<'a> {
           if self.read_char() == Some('\'') {
             return TChar(x);
           } else {
-            fail!("Multi char character")
+            panic!("Multi char character")
           }
         }
-        None => fail!("Unexpected EOF"),
+        None => panic!("Unexpected EOF"),
       }
     } else {
       match c {
