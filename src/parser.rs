@@ -156,7 +156,7 @@ impl<'a> Parser<'a> {
                 }
                 _ => break,
             };
-            debug!("Op {}", lhs_op);
+            println!("Op {}", lhs_op);
 
             let mut rhs = self.sub_expression()?;
             self.lexer.next();
@@ -168,7 +168,7 @@ impl<'a> Parser<'a> {
                         if lookahead < lhs_prec {
                             break;
                         }
-                        debug!("Inner op {}", op);
+                        println!("Inner op {}", op);
                     }
                     _ => break,
                 }

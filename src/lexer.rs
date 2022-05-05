@@ -150,7 +150,7 @@ impl<'a> Lexer<'a> {
       let t = self.next_token();
       self.tokens.push(t);
       self.reset_str();
-      debug!("Token {}", self.current());
+      println!("Token {}", self.current());
     }
     self.current()
   }
