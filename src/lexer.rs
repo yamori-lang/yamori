@@ -1,3 +1,27 @@
+use crate::interner::get_local_interner;
+use crate::interner::InternedStr;
+use crate::interner::Interner;
+use crate::lexer::Token::TAssign;
+use crate::lexer::Token::TChar;
+use crate::lexer::Token::TCloseBrace;
+use crate::lexer::Token::TCloseBracket;
+use crate::lexer::Token::TCloseParen;
+use crate::lexer::Token::TColon;
+use crate::lexer::Token::TComma;
+use crate::lexer::Token::TElse;
+use crate::lexer::Token::TFloat;
+use crate::lexer::Token::TFn;
+use crate::lexer::Token::TIdentifier;
+use crate::lexer::Token::TIf;
+use crate::lexer::Token::TInteger;
+use crate::lexer::Token::TLet;
+use crate::lexer::Token::TOpenBrace;
+use crate::lexer::Token::TOpenBracket;
+use crate::lexer::Token::TOpenParen;
+use crate::lexer::Token::TOperator;
+use crate::lexer::Token::TSemicolon;
+use crate::lexer::Token::TString;
+use crate::lexer::Token::TEOF;
 use collections::RingBuf;
 use std::cell::RefCell;
 use std::fmt;
@@ -8,7 +32,7 @@ use interner::*;
 
 #[deriving(PartialEq, Clone, Show)]
 pub enum Token {
-  TInteger(int),
+  TInteger(i32),
   TFloat(f64),
   TString(InternedStr),
   TChar(char),
@@ -45,9 +69,9 @@ fn name_or_keyword(interner: &mut Interner, s: &str) -> Token {
 
 #[deriving(Clone, PartialEq)]
 pub struct Location {
-  pub column: int,
-  pub row: int,
-  pub absolute: int,
+  pub column: i32,
+  pub row: i32,
+  pub absolute: i32,
 }
 
 impl Location {

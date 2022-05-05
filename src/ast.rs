@@ -8,7 +8,7 @@ pub enum Type<Id> {
 
 #[deriving(Clone, PartialEq, Show)]
 pub enum Literal {
-  Integer(int),
+  Integer(i32),
   Float(f64),
   String(InternedStr),
 }

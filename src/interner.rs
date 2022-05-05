@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fmt;
+use std::rc::Rc;
 
 #[deriving(Eq, PartialEq, Clone, Default, Hash)]
 pub struct InternedStr(uint);
@@ -9,13 +9,15 @@ pub struct InternedStr(uint);
 #[deriving(Clone)]
 pub struct Interner {
     indexes: HashMap<String, uint>,
-    strings: Vec<String>
+    strings: Vec<String>,
 }
 
 impl Interner {
-
     pub fn new() -> Interner {
-        Interner { indexes: HashMap::new(), strings: Vec::new() }
+        Interner {
+            indexes: HashMap::new(),
+            strings: Vec::new(),
+        }
     }
 
     pub fn intern(&mut self, s: &str) -> InternedStr {
@@ -33,8 +35,7 @@ impl Interner {
     pub fn get_str<'a>(&'a self, InternedStr(i): InternedStr) -> &'a str {
         if i < self.strings.len() {
             self.strings.get(i).as_slice()
-        }
-        else {
+        } else {
             fail!("Invalid InternedStr {}", i)
         }
     }
@@ -42,7 +43,7 @@ impl Interner {
 
 ///Returns a reference to the interner stored in TLD
 pub fn get_local_interner() -> Rc<RefCell<Interner>> {
-    local_data_key!(key: Rc<RefCell<Interner>>)
+    local_data_key!(key: Rc<RefCell<Interner>>);
     match key.get() {
         Some(interner) => interner.clone(),
         None => {
