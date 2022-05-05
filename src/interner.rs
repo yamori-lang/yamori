@@ -4,11 +4,11 @@ use std::fmt;
 use std::rc::Rc;
 
 #[derive(Eq, PartialEq, Clone, Default, Hash)]
-pub struct InternedStr(uint);
+pub struct InternedStr(i32);
 
 #[derive(Clone)]
 pub struct Interner {
-    indexes: HashMap<String, uint>,
+    indexes: HashMap<String, i32>,
     strings: Vec<String>,
 }
 

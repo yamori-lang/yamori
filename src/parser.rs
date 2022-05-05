@@ -9,15 +9,13 @@ use crate::ast::Expr::Match;
 use crate::ast::Literal::Float;
 use crate::ast::Literal::Integer;
 use crate::interner::intern;
+use crate::interner::InternedStr;
 use crate::lexer::Lexer;
 use crate::lexer::Token::TFloat;
 use crate::lexer::Token::TIdentifier;
 use crate::lexer::Token::TInteger;
 use crate::lexer::Token::TOperator;
 use crate::lexer::Token::TString;
-use ast::*;
-use interner::InternedStr;
-use lexer::*;
 
 macro_rules! expect {
     ($e: expr, $p: pat) => {

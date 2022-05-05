@@ -108,7 +108,7 @@ pub struct Lexer<'a> {
   peek_c: Option<char>,
   location: Location,
   tokens: RingBuf<Token>,
-  offset: uint,
+  offset: i32,
   interner: Rc<RefCell<Interner>>,
 }
 
