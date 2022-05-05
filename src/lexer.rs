@@ -28,9 +28,13 @@ use std::fmt;
 use std::from_str::FromStr;
 use std::rc::Rc;
 
+fn binop(l: Expr<InternedStr>, s: &str, r: Expr<InternedStr>) -> Expr<InternedStr> {
+  BinOp(Box::new(l), intern(s), Box::new(r))
+}
+
 use interner::*;
 
-#[deriving(PartialEq, Clone, Show)]
+#[derive(PartialEq, Clone, Show)]
 pub enum Token {
   TInteger(i32),
   TFloat(f64),
@@ -67,7 +71,7 @@ fn name_or_keyword(interner: &mut Interner, s: &str) -> Token {
   }
 }
 
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Location {
   pub column: i32,
   pub row: i32,

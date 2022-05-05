@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
 
-#[deriving(Eq, PartialEq, Clone, Default, Hash)]
+#[derive(Eq, PartialEq, Clone, Default, Hash)]
 pub struct InternedStr(uint);
 
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct Interner {
     indexes: HashMap<String, uint>,
     strings: Vec<String>,
