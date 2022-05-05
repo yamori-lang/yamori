@@ -1,4 +1,7 @@
+use crate::ast::Expr;
+use crate::ast::Expr::BinOp;
 use crate::interner::get_local_interner;
+use crate::interner::intern;
 use crate::interner::InternedStr;
 use crate::interner::Interner;
 use crate::lexer::Token::TAssign;
@@ -103,7 +106,7 @@ fn is_operator(first_char: char) -> bool {
 }
 
 pub struct Lexer<'a> {
-  input: &'a mut Buffer,
+  input: String,
   buffer: String,
   peek_c: Option<char>,
   location: Location,
@@ -113,7 +116,7 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-  pub fn new(s: &'a mut Buffer) -> Lexer<'a> {
+  pub fn new(s: String) -> Lexer<'a> {
     Lexer {
       peek_c: Some(s.read_char().unwrap()),
       input: s,

@@ -67,7 +67,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(input: &'a mut Buffer) -> Parser<'a> {
+    pub fn new(input: String) -> Parser<'a> {
         Parser {
             lexer: Lexer::new(input),
         }
