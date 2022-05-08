@@ -61,12 +61,12 @@ fn is_statement<T>(e: &Expr<T>) -> bool {
 type PString = InternedStr;
 type ParseResult<T> = Result<T, String>;
 
-pub struct Parser<'a> {
-    lexer: Lexer<'a>,
+pub struct Parser {
+    lexer: Lexer,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(input: String) -> Parser<'a> {
+impl Parser {
+    pub fn new(input: String) -> Parser {
         Parser {
             lexer: Lexer::new(input),
         }

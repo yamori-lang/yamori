@@ -103,18 +103,18 @@ fn is_operator(first_char: char) -> bool {
   }
 }
 
-pub struct Lexer<'a> {
+pub struct Lexer {
   input: String,
   buffer: String,
   peek_c: Option<char>,
   location: Location,
   tokens: RingBuffer<Token>,
-  offset: u32,
+  offset: usize,
   interner: Rc<RefCell<Interner>>,
 }
 
-impl<'a> Lexer<'a> {
-  pub fn new(s: String) -> Lexer<'a> {
+impl Lexer {
+  pub fn new(s: String) -> Lexer {
     Lexer {
       peek_c: Some(s.read_char().unwrap()),
       input: s,
@@ -327,7 +327,7 @@ mod tests {
   use crate::interner::intern;
   use std::io::BufReader;
 
-  fn buffer<'a>(s: &'a str) -> BufReader<'a> {
+  fn buffer(s: &str) -> BufReader {
     BufReader::new(s.as_bytes())
   }
 

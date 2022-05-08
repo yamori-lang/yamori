@@ -4,11 +4,11 @@ use std::fmt;
 use std::rc::Rc;
 
 #[derive(Eq, PartialEq, Clone, Default, Hash)]
-pub struct InternedStr(u32);
+pub struct InternedStr(usize);
 
 #[derive(Clone)]
 pub struct Interner {
-    indexes: HashMap<String, u32>,
+    indexes: HashMap<String, usize>,
     strings: Vec<String>,
 }
 
@@ -32,7 +32,7 @@ impl Interner {
         }
     }
 
-    pub fn get_str(&'a self, InternedStr(i): InternedStr) -> &'a str {
+    pub fn get_str(&self, InternedStr(i): InternedStr) -> &str {
         if i < self.strings.len() {
             self.strings.get(i).as_slice()
         } else {
@@ -43,15 +43,16 @@ impl Interner {
 
 ///Returns a reference to the interner stored in TLD
 pub fn get_local_interner() -> Rc<RefCell<Interner>> {
-    thread_local!(static key: Rc<RefCell<Interner>> = Rc::new(RefCell::new()));
-    match key.get() {
+    thread_local!(static key: Rc<RefCell<Interner>> = Rc::new(RefCell::new(Interner::new())));
+
+    key.with(|k| match k.borrow() {
         Some(interner) => interner.clone(),
         None => {
             let interner = Rc::new(RefCell::new(Interner::new()));
-            key.replace(Some(interner.clone()));
+            k.replace(Some(interner.clone()));
             interner
         }
-    }
+    });
 }
 
 pub fn set_local_interner(interner: Interner) {
@@ -64,11 +65,11 @@ pub fn intern(s: &str) -> InternedStr {
 }
 
 trait Str {
-    fn as_slice<'a>(&'a self) -> &'a str;
+    fn as_slice(&self) -> &str;
 }
 
 impl Str for InternedStr {
-    fn as_slice<'a>(&'a self) -> &'a str {
+    fn as_slice(&self) -> &str {
         let interner = get_local_interner();
         let mut x = (*interner).borrow_mut();
         let r: &str = x.get_str(*self);

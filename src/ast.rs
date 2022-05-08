@@ -33,7 +33,7 @@ pub enum Expr<Id> {
   IfElse(Box<Expr<Id>>, Box<Expr<Id>>, Box<Expr<Id>>),
   Match(Box<Expr<Id>>, Vec<Alternative<Id>>),
   Block(Vec<Expr<Id>>),
-  BinOp(Id, Box<Expr<Id>>),
+  BinOp(Box<Expr<Id>>, Id, Box<Expr<Id>>),
   Let(Id, Box<Expr<Id>>),
 }
 
