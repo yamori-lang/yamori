@@ -4,11 +4,11 @@ use std::fmt;
 use std::rc::Rc;
 
 #[derive(Eq, PartialEq, Clone, Default, Hash)]
-pub struct InternedStr(i32);
+pub struct InternedStr(u32);
 
 #[derive(Clone)]
 pub struct Interner {
-    indexes: HashMap<String, i32>,
+    indexes: HashMap<String, u32>,
     strings: Vec<String>,
 }
 
@@ -32,7 +32,7 @@ impl Interner {
         }
     }
 
-    pub fn get_str<'a>(&'a self, InternedStr(i): InternedStr) -> &'a str {
+    pub fn get_str(&'a self, InternedStr(i): InternedStr) -> &'a str {
         if i < self.strings.len() {
             self.strings.get(i).as_slice()
         } else {
@@ -43,7 +43,7 @@ impl Interner {
 
 ///Returns a reference to the interner stored in TLD
 pub fn get_local_interner() -> Rc<RefCell<Interner>> {
-    local_data_key!(key: Rc<RefCell<Interner>>);
+    thread_local!(static key: Rc<RefCell<Interner>> = Rc::new(RefCell::new()));
     match key.get() {
         Some(interner) => interner.clone(),
         None => {
@@ -61,6 +61,10 @@ pub fn set_local_interner(interner: Interner) {
 pub fn intern(s: &str) -> InternedStr {
     let i = get_local_interner();
     (*i).borrow_mut().intern(s)
+}
+
+trait Str {
+    fn as_slice<'a>(&'a self) -> &'a str;
 }
 
 impl Str for InternedStr {

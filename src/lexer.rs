@@ -25,19 +25,17 @@ use crate::lexer::Token::TOperator;
 use crate::lexer::Token::TSemicolon;
 use crate::lexer::Token::TString;
 use crate::lexer::Token::TEOF;
-use collections::RingBuf;
+use ringbuf::RingBuffer;
 use std::cell::RefCell;
 use std::fmt;
-use std::from_str::FromStr;
 use std::rc::Rc;
+use std::str::FromStr;
 
 fn binop(l: Expr<InternedStr>, s: &str, r: Expr<InternedStr>) -> Expr<InternedStr> {
   BinOp(Box::new(l), intern(s), Box::new(r))
 }
 
-use interner::*;
-
-#[derive(PartialEq, Clone, Show)]
+#[derive(PartialEq, Clone)]
 pub enum Token {
   TInteger(i32),
   TFloat(f64),
@@ -110,8 +108,8 @@ pub struct Lexer<'a> {
   buffer: String,
   peek_c: Option<char>,
   location: Location,
-  tokens: RingBuf<Token>,
-  offset: i32,
+  tokens: RingBuffer<Token>,
+  offset: u32,
   interner: Rc<RefCell<Interner>>,
 }
 
@@ -126,7 +124,7 @@ impl<'a> Lexer<'a> {
         column: 1,
         absolute: 0,
       },
-      tokens: RingBuf::with_capacity(20),
+      tokens: RingBuffer::with_capacity(20),
       offset: 0,
       interner: get_local_interner(),
     }
@@ -326,7 +324,7 @@ impl<'a> Lexer<'a> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use interner::intern;
+  use crate::interner::intern;
   use std::io::BufReader;
 
   fn buffer<'a>(s: &'a str) -> BufReader<'a> {

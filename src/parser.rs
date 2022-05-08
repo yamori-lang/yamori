@@ -8,7 +8,6 @@ use crate::ast::Expr::Literal;
 use crate::ast::Expr::Match;
 use crate::ast::Literal::Float;
 use crate::ast::Literal::Integer;
-use crate::interner::intern;
 use crate::interner::InternedStr;
 use crate::lexer::Lexer;
 use crate::lexer::Token::TFloat;
@@ -186,8 +185,7 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ast::*;
-    use interner::*;
+    use crate::interner::*;
     use std::io::BufReader;
 
     fn binop(l: Expr<InternedStr>, s: &str, r: Expr<InternedStr>) -> Expr<InternedStr> {
