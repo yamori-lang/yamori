@@ -172,7 +172,7 @@ impl Parser {
                     _ => break,
                 }
                 self.lexer.backtrack();
-                rhs = self.binary_expression(rhs, lookahead);
+                rhs = self.binary_expression(rhs, lookahead)?;
                 self.lexer.next();
             }
             lhs = BinOp(Box::new(lhs), lhs_op.clone(), Box::new(rhs))

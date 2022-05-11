@@ -178,7 +178,7 @@ impl Lexer {
     let result = self.peek_c;
     match self.peek_c {
       Some(c) => {
-        self.buffer.push_char(c);
+        self.buffer.push(c);
         self.peek_c = match self.input.read_char() {
           Ok(c) => Some(c),
           Err(_) => None,
