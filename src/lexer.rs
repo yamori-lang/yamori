@@ -111,3 +111,95 @@ impl Iterator for Lexer {
     Some(token)
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn lexer_is_letter() {
+    assert_eq!(true, is_letter('a'));
+    assert_eq!(true, is_letter('z'));
+    assert_eq!(true, is_letter('_'));
+    assert_eq!(false, is_letter('0'));
+    assert_eq!(false, is_letter('1'));
+    assert_eq!(false, is_letter('!'));
+  }
+
+  #[test]
+  fn lexer_is_digit() {
+    assert_eq!(false, is_digit('a'));
+    assert_eq!(false, is_digit('z'));
+    assert_eq!(false, is_digit('_'));
+    assert_eq!(true, is_digit('0'));
+    assert_eq!(true, is_digit('1'));
+    assert_eq!(false, is_digit('!'));
+  }
+
+  #[test]
+  fn lexer_proper_initial_values() {
+    let lexer = Lexer::new(vec!['a']);
+
+    assert_eq!(lexer.input.len(), 1);
+    assert_eq!(lexer.input[0], 'a');
+    assert_eq!(lexer.index, 0);
+    assert_eq!(lexer.read_index, 0);
+    assert_eq!(lexer.current_char, '\0');
+  }
+
+  #[test]
+  fn lexer_next_identifier() {
+    let mut lexer = Lexer::new(vec!['a']);
+    lexer.read_char();
+    assert_eq!(Some(token::Token::Identifier(vec!['a'])), lexer.next());
+  }
+
+  #[test]
+  fn lexer_next_eof() {
+    let mut lexer = Lexer::new(vec!['a']);
+    lexer.read_char();
+    lexer.next();
+    assert_eq!(Some(token::Token::EOF), lexer.next());
+  }
+
+  #[test]
+  fn lexer_next_none() {
+    let mut lexer = Lexer::new(vec!['?']);
+    lexer.read_char();
+    assert_eq!(None, lexer.next());
+  }
+
+  #[test]
+  fn lexer_read_char_single() {
+    let mut lexer = Lexer::new(vec!['a']);
+    lexer.read_char();
+    assert_eq!(lexer.index, 0);
+    assert_eq!(lexer.read_index, 1);
+    assert_eq!(lexer.current_char, 'a');
+  }
+
+  #[test]
+  fn lexer_read_char_overflow() {
+    let mut lexer = Lexer::new(vec!['a']);
+    lexer.read_char();
+    lexer.read_char();
+    assert_eq!(lexer.index, 1);
+    assert_eq!(lexer.read_index, 2);
+    assert_eq!(lexer.current_char, '\0');
+  }
+
+  #[test]
+  fn lexer_skip_whitespace() {
+    let mut lexer = Lexer::new(vec![' ']);
+    lexer.read_char();
+    lexer.skip_whitespace();
+    assert_eq!(lexer.read_index, 2);
+  }
+  #[test]
+  fn lexer_skip_whitespace_ignore_non_whitespace() {
+    let mut lexer = Lexer::new(vec!['a']);
+    lexer.read_char();
+    lexer.skip_whitespace();
+    assert_eq!(lexer.read_index, 1);
+  }
+}
