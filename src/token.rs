@@ -5,8 +5,10 @@ pub enum Token {
   Identifier(Vec<char>),
   Integer(Vec<char>),
   Fn,
-  BraceL(char),
-  BraceR(char),
+  BraceL,
+  BraceR,
+  ParenthesesL,
+  ParenthesesR,
 }
 
 pub fn get_keyword_token(chars: &Vec<char>) -> Result<Token, String> {
