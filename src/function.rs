@@ -5,7 +5,7 @@ use crate::{block, node, pass, prototype};
 pub struct Function {
   pub is_public: bool,
   pub prototype: prototype::Prototype,
-  body: block::Block,
+  pub body: block::Block,
 }
 
 impl node::Node for Function {
