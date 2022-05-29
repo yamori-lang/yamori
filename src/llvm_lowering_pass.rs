@@ -2,14 +2,14 @@ use crate::{int_kind, node, pass, pass::Pass, prototype, void_kind};
 use inkwell::types::AnyType;
 
 struct LlvmLoweringPass<'a> {
-  llvm_context: inkwell::context::Context,
+  llvm_context: &'a inkwell::context::Context,
   llvm_type_map: std::collections::HashMap<node::AnyKindNode<'a>, inkwell::types::AnyTypeEnum<'a>>,
 }
 
 impl<'a> LlvmLoweringPass<'a> {
-  pub fn new() -> Self {
+  pub fn new(llvm_context: &'a inkwell::context::Context) -> Self {
     Self {
-      llvm_context: inkwell::context::Context::create(),
+      llvm_context,
       llvm_type_map: std::collections::HashMap::new(),
     }
   }
@@ -22,7 +22,7 @@ impl<'a> LlvmLoweringPass<'a> {
   /// into the LLVM types map.
 
   fn visit_or_retrieve_type(
-    &'a mut self,
+    mut self,
     node: &'a node::AnyKindNode,
   ) -> Option<&'a inkwell::types::AnyTypeEnum> {
     if !self.llvm_type_map.contains_key(node) {
@@ -39,7 +39,7 @@ impl<'a> LlvmLoweringPass<'a> {
       }
     }
 
-    Some(self.llvm_type_map.get(node).unwrap())
+    self.llvm_type_map.get(node)
   }
 }
 
@@ -49,25 +49,12 @@ impl<'a> pass::Pass<'a> for LlvmLoweringPass<'a> {
     // inkwell::values::GenericValue
   }
 
-  fn visit_int_kind(&'a self, int_kind: &'a int_kind::IntKind) {
-    // TODO: Use diagnostics.
-    if int_kind.name.is_empty() {
-      panic!("kind's name is empty");
-    }
-
-    let mut llvm_type_map = std::collections::HashMap::new();
-
-    let llvm_int_type: Option<inkwell::types::IntType<'_>> = match int_kind.name.as_str() {
-      "i32" => Some(self.llvm_context.i32_type()),
-      "i64" => Some(self.llvm_context.i64_type()),
-      _ => panic!("unknown int kind name"),
-    };
-
-    // v: llvm_int_type.unwrap().as_any_type_enum()
-
+  fn visit_int_kind(&mut self, int_kind: &'a int_kind::IntKind) {
     self.llvm_type_map.insert(
       node::AnyKindNode::IntKind(int_kind),
-      llvm_int_type.unwrap().as_any_type_enum(),
+      match int_kind.size {
+        int_kind::IntSize::Signed32 => self.llvm_context.i32_type().as_any_type_enum(),
+      },
     );
   }
 
@@ -84,21 +71,31 @@ mod tests {
 
   #[test]
   fn llvm_lowering_pass_proper_initial_values() {
-    let llvm_lowering_pass = LlvmLoweringPass::new();
+    let llvm_context = inkwell::context::Context::create();
+    let llvm_lowering_pass = LlvmLoweringPass::new(&llvm_context);
+
+    assert_eq!(true, llvm_lowering_pass.llvm_type_map.is_empty())
+  }
+
+  #[test]
+  fn llvm_lowering_pass_visit_int_kind() {
+    let llvm_context = inkwell::context::Context::create();
+    let mut llvm_lowering_pass = LlvmLoweringPass::new(&llvm_context);
 
     llvm_lowering_pass.visit_int_kind(&int_kind::IntKind {
-      name: "i32".to_string(),
+      size: int_kind::IntSize::Signed32,
     });
 
-    assert_eq!(1, 1);
+    assert_eq!(llvm_lowering_pass.llvm_type_map.len(), 1);
   }
 
   #[test]
   fn llvm_lowering_pass_visit_or_retrieve_type() {
-    let mut llvm_lowering_pass = LlvmLoweringPass::new();
+    let llvm_context = inkwell::context::Context::create();
+    let mut llvm_lowering_pass = LlvmLoweringPass::new(&llvm_context);
 
     let int_kind = int_kind::IntKind {
-      name: "i32".to_string(),
+      size: int_kind::IntSize::Signed32,
     };
 
     let int_kind_box = node::AnyKindNode::IntKind(&int_kind);
@@ -110,6 +107,7 @@ mod tests {
         .is_some()
     );
 
-    assert_eq!(1, llvm_lowering_pass.llvm_types_map.len());
+    // TODO
+    // assert_eq!(1, llvm_lowering_pass.llvm_types_map.len());
   }
 }
