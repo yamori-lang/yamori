@@ -35,7 +35,7 @@ impl<'a> LlvmLoweringPass<'a> {
   }
 }
 
-impl<'a> pass::Pass<'a> for LlvmLoweringPass<'a> {
+impl<'a> pass::Pass for LlvmLoweringPass<'a> {
   fn visit_prototype(&mut self, _prototype: &prototype::Prototype) {
     // TODO
     // inkwell::values::GenericValue
