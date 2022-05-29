@@ -9,6 +9,7 @@ pub enum Token {
   BraceR,
   ParenthesesL,
   ParenthesesR,
+  Extern,
 }
 
 pub fn get_keyword_token(chars: &Vec<char>) -> Result<Token, String> {
@@ -16,6 +17,7 @@ pub fn get_keyword_token(chars: &Vec<char>) -> Result<Token, String> {
 
   match &identifier[..] {
     "fn" => Ok(Token::Fn),
+    "extern" => Ok(Token::Extern),
     _ => Err(String::from("Not a keyword")),
   }
 }
