@@ -7,7 +7,7 @@ pub struct VoidKind {
 }
 
 impl node::Node for VoidKind {
-  fn accept(&self, pass: &dyn pass::Pass) {
+  fn accept(&mut self, pass: &dyn pass::Pass) {
     // pass.visit_void_kind(self);
   }
 }
