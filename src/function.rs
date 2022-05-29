@@ -6,7 +6,7 @@ use crate::pass;
 pub struct Function {}
 
 impl node::Node for Function {
-  fn accept(&self, pass: &dyn pass::Pass) {
+  fn accept(&mut self, pass: &dyn pass::Pass) {
     // pass.visit_function(self);
   }
 }
