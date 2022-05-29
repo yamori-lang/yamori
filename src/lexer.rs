@@ -12,7 +12,6 @@ fn is_letter(character: char) -> bool {
 }
 
 fn is_digit(character: char) -> bool {
-  // num
   '0' <= character && character <= '9'
 }
 
@@ -28,7 +27,6 @@ impl Lexer {
 
   pub fn read_char(&mut self) {
     if self.read_index >= self.input.len() {
-      // finish
       self.current_char = '\0';
     } else {
       self.current_char = self.input[self.read_index];
@@ -44,7 +42,7 @@ impl Lexer {
       || self.current_char == '\n'
       || self.current_char == '\r'
     {
-      self.read_char()
+      self.read_char();
     }
   }
 }
@@ -53,14 +51,18 @@ impl Iterator for Lexer {
   type Item = token::Token;
 
   fn next(&mut self) -> Option<Self::Item> {
-    let read_identifier = |lexer: &mut Lexer| -> Vec<char> {
+    let read_identifier = |lexer: &mut Lexer| -> String {
       let index = lexer.index;
 
       while lexer.index < lexer.input.len() && is_letter(lexer.current_char) {
         lexer.read_char();
       }
 
-      lexer.input[index..lexer.index].to_vec()
+      lexer.input[index..lexer.index]
+        .to_vec()
+        .iter()
+        .cloned()
+        .collect::<String>()
     };
 
     let read_number = |lexer: &mut Lexer| -> Vec<char> {
@@ -75,36 +77,31 @@ impl Iterator for Lexer {
 
     self.skip_whitespace();
 
-    let token: token::Token;
-
-    match self.current_char {
-      '{' => {
-        token = token::Token::BraceL;
-      }
-      '\0' => {
-        token = token::Token::EOF;
-      }
+    let token: token::Token = match self.current_char {
+      '{' => token::Token::SymbolBraceL,
+      '}' => token::Token::SymbolBraceR,
+      '(' => token::Token::SymbolParenthesesL,
+      ')' => token::Token::SymbolParenthesesR,
+      '\0' => token::Token::EOF,
       _ => {
         if is_letter(self.current_char) {
-          let identifier: Vec<char> = read_identifier(self);
+          let identifier = read_identifier(self);
 
-          match token::get_keyword_token(&identifier) {
+          match token::get_keyword_or_type_token(identifier.as_str()) {
             Ok(keyword_token) => {
               return Some(keyword_token);
             }
-            Err(_err) => {
+            Err(_) => {
               return Some(token::Token::Identifier(identifier));
             }
           }
         } else if is_digit(self.current_char) {
-          let identifier: Vec<char> = read_number(self);
-
-          return Some(token::Token::Integer(identifier));
+          return Some(token::Token::Integer(read_number(self)));
         } else {
           return None;
         }
       }
-    }
+    };
 
     self.read_char();
 
@@ -150,28 +147,38 @@ mod tests {
   #[test]
   fn lexer_next_identifier() {
     let mut lexer = Lexer::new(vec!['a']);
+
     lexer.read_char();
-    assert_eq!(Some(token::Token::Identifier(vec!['a'])), lexer.next());
+
+    assert_eq!(
+      Some(token::Token::Identifier(String::from("a"))),
+      lexer.next()
+    );
   }
 
   #[test]
   fn lexer_next_eof() {
     let mut lexer = Lexer::new(vec!['a']);
+
     lexer.read_char();
     lexer.next();
+
     assert_eq!(Some(token::Token::EOF), lexer.next());
   }
 
   #[test]
   fn lexer_next_none() {
     let mut lexer = Lexer::new(vec!['?']);
+
     lexer.read_char();
+
     assert_eq!(None, lexer.next());
   }
 
   #[test]
   fn lexer_read_char_single() {
     let mut lexer = Lexer::new(vec!['a']);
+
     lexer.read_char();
     assert_eq!(lexer.index, 0);
     assert_eq!(lexer.read_index, 1);
@@ -181,6 +188,7 @@ mod tests {
   #[test]
   fn lexer_read_char_overflow() {
     let mut lexer = Lexer::new(vec!['a']);
+
     lexer.read_char();
     lexer.read_char();
     assert_eq!(lexer.index, 1);
@@ -191,13 +199,16 @@ mod tests {
   #[test]
   fn lexer_skip_whitespace() {
     let mut lexer = Lexer::new(vec![' ']);
+
     lexer.read_char();
     lexer.skip_whitespace();
     assert_eq!(lexer.read_index, 2);
   }
+
   #[test]
   fn lexer_skip_whitespace_ignore_non_whitespace() {
     let mut lexer = Lexer::new(vec!['a']);
+
     lexer.read_char();
     lexer.skip_whitespace();
     assert_eq!(lexer.read_index, 1);
