@@ -22,9 +22,9 @@ impl<'a> LlvmLoweringPass<'a> {
   /// into the LLVM types map.
   fn visit_or_retrieve_type(
     &mut self,
-    node: &'a node::AnyKindNode,
+    node: node::AnyKindNode,
   ) -> Option<&'a inkwell::types::AnyTypeEnum> {
-    if !self.llvm_type_map.contains_key(node) {
+    if !self.llvm_type_map.contains_key(&node) {
       match node {
         node::AnyKindNode::IntKind(value) => self.visit_int_kind(&value),
         node::AnyKindNode::VoidKind(value) => self.visit_void_kind(&value),
@@ -55,6 +55,12 @@ impl<'a> pass::Pass for LlvmLoweringPass<'a> {
   }
 
   fn visit_void_kind(&mut self, void_kind: &void_kind::VoidKind) {
+    let v = node::AnyKindNode::VoidKind(*void_kind);
+
+    self
+      .llvm_type_map
+      .insert(v, self.llvm_context.void_type().as_any_type_enum());
+
     self.llvm_type_map.insert(
       node::AnyKindNode::VoidKind(*void_kind),
       self.llvm_context.void_type().as_any_type_enum(),
@@ -105,6 +111,7 @@ mod tests {
   fn llvm_lowering_pass_visit_void_kind() {
     let llvm_context = inkwell::context::Context::create();
     let mut llvm_lowering_pass = LlvmLoweringPass::new(&llvm_context);
+
     llvm_lowering_pass.visit_void_kind(&void_kind::VoidKind {});
     assert_eq!(llvm_lowering_pass.llvm_type_map.len(), 1);
   }
@@ -113,6 +120,7 @@ mod tests {
   fn llvm_lowering_pass_visit_int_kind() {
     let llvm_context = inkwell::context::Context::create();
     let mut llvm_lowering_pass = LlvmLoweringPass::new(&llvm_context);
+
     llvm_lowering_pass.visit_int_kind(&int_kind::IntKind {
       size: int_kind::IntSize::Signed32,
     });
