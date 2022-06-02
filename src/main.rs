@@ -5,6 +5,7 @@ pub mod function;
 pub mod int_kind;
 pub mod lexer;
 pub mod llvm_lowering_pass;
+pub mod namespace;
 pub mod node;
 pub mod parser;
 pub mod pass;
