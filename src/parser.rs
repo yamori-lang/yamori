@@ -31,15 +31,6 @@ macro_rules! assert {
   };
 }
 
-macro_rules! assert_ok {
-  ($expr:expr) => {
-    match $expr {
-      Ok(_) => $expr.ok().unwrap(),
-      Err(_) => return Result::Err($expr.err().unwrap()),
-    }
-  };
-}
-
 type ParserResult<T> = Result<T, diagnostic::Diagnostic>;
 
 struct Parser {
@@ -173,10 +164,10 @@ impl Parser {
     // FIXME: And EOF token.
     // while self.is(token::Token::ParenthesesR) {
     Ok(prototype::Prototype {
-      name: assert_ok!(self.parse_name()),
+      name: self.parse_name()?,
       // TODO: Support for variadic.
       is_variadic: false,
-      return_kind: assert_ok!(self.parse_kind()),
+      return_kind: self.parse_kind()?,
     })
     // }
   }
@@ -202,7 +193,7 @@ impl Parser {
     skip_past!(self, token::Token::KeywordExtern);
 
     Ok(external::External {
-      prototype: assert_ok!(self.parse_prototype()),
+      prototype: self.parse_prototype()?,
     })
   }
 }
