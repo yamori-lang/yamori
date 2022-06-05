@@ -9,6 +9,7 @@ pub mod namespace;
 pub mod node;
 pub mod parser;
 pub mod pass;
+pub mod pass_manager;
 pub mod prototype;
 pub mod token;
 pub mod void_kind;

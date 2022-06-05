@@ -1,4 +1,4 @@
-use crate::{block, diagnostic, function, int_kind, node, prototype, void_kind};
+use crate::{block, diagnostic, function, int_kind, node, pass_manager, prototype, void_kind};
 
 pub struct PassContext {
   diagnostics: Vec<diagnostic::Diagnostic>,
@@ -7,8 +7,12 @@ pub struct PassContext {
 pub type PassResult = Result<(), diagnostic::Diagnostic>;
 
 pub trait Pass {
-  fn register(&self) -> bool {
+  fn register(&self, pass_manager: &pass_manager::PassManager) -> bool {
     return true;
+  }
+
+  fn get_diagnostics(&self) -> Vec<diagnostic::Diagnostic> {
+    vec![]
   }
 
   fn visit(&mut self, node: &dyn node::Node) -> PassResult {
