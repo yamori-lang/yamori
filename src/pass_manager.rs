@@ -1,15 +1,15 @@
 use crate::{diagnostic, node, pass};
 
-pub struct PassManager {
-  passes: Vec<Box<dyn pass::Pass>>,
+pub struct PassManager<'a> {
+  passes: Vec<Box<dyn pass::Pass<'a>>>,
 }
 
-impl PassManager {
+impl<'a> PassManager<'a> {
   pub fn new() -> Self {
     Self { passes: vec![] }
   }
 
-  pub fn add_pass(&mut self, pass: Box<dyn pass::Pass>) -> bool {
+  pub fn add_pass(&mut self, pass: Box<dyn pass::Pass<'a>>) -> bool {
     if !pass.register(self) {
       return false;
     }
@@ -47,7 +47,7 @@ mod tests {
     //
   }
 
-  impl pass::Pass for TestPassEmpty {
+  impl pass::Pass<'_> for TestPassEmpty {
     //
   }
 
@@ -55,7 +55,7 @@ mod tests {
     //
   }
 
-  impl pass::Pass for TestPassNoRegister {
+  impl pass::Pass<'_> for TestPassNoRegister {
     fn register(&self, pass_manager: &PassManager) -> bool {
       return false;
     }
@@ -71,7 +71,7 @@ mod tests {
     }
   }
 
-  impl<'a> pass::Pass for TestPassWithVisit<'a> {
+  impl<'a> pass::Pass<'_> for TestPassWithVisit<'a> {
     fn visit(&mut self, _: &dyn node::Node) -> pass::PassResult {
       self.is_visit_invoked = &true;
 
