@@ -5,7 +5,8 @@ use crate::pass;
 pub struct Block {}
 
 impl node::Node for Block {
-  fn accept(&mut self, pass: &dyn pass::Pass) {
-    // pass.visit_block(self);
+  fn accept(&mut self, pass: &mut dyn pass::Pass) -> pass::PassResult {
+    pass.visit_block(self)?;
+    Ok(())
   }
 }
