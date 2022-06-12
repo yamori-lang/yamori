@@ -40,12 +40,12 @@ impl<'a> LlvmLoweringPass<'a> {
   /// into the LLVM types map.
   fn visit_or_retrieve_type(
     &mut self,
-    node: node::AnyKindNode,
-  ) -> Result<Option<&inkwell::types::AnyTypeEnum>, diagnostic::Diagnostic> {
+    node: &node::AnyKindNode,
+  ) -> Result<Option<&inkwell::types::AnyTypeEnum<'a>>, diagnostic::Diagnostic> {
     if !self.llvm_type_map.contains_key(&node) {
       match node {
-        node::AnyKindNode::IntKind(value) => self.visit_int_kind(&value),
-        node::AnyKindNode::VoidKind(value) => self.visit_void_kind(&value),
+        node::AnyKindNode::IntKind(value) => self.visit_int_kind(&value)?,
+        node::AnyKindNode::VoidKind(value) => self.visit_void_kind(&value)?,
       };
     }
 
@@ -91,7 +91,7 @@ impl<'a> pass::Pass<'a> for LlvmLoweringPass<'a> {
   fn visit_function(&mut self, function: &function::Function) -> pass::PassResult {
     // TODO:
 
-    let llvm_return_type = self.visit_or_retrieve_type(&function.prototype.return_kind);
+    let llvm_return_type = self.visit_or_retrieve_type(&function.prototype.return_kind)?;
 
     assert!(llvm_return_type.is_some());
 
