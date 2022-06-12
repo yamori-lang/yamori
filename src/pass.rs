@@ -20,7 +20,7 @@ pub trait Pass<'a> {
 
   fn visit(&mut self, node: &dyn node::Node) -> PassResult {
     // TODO:
-    // node.accept(self);
+    // node.accept(&self);
     self.visit_children(node)?;
 
     Ok(())
@@ -59,6 +59,10 @@ pub trait Pass<'a> {
   }
 
   fn visit_external(&mut self, _: &external::External) -> PassResult {
+    Ok(())
+  }
+
+  fn visit_return_stmt(&mut self, _: &block::ReturnStmt) -> PassResult {
     Ok(())
   }
 }

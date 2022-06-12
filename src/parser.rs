@@ -75,7 +75,26 @@ impl Parser {
     self.tokens.len() == 0 || self.index == self.tokens.len() - 1
   }
 
+  fn peek(&self) -> Option<token::Token> {
+    match self.tokens.get(self.index + 1) {
+      Some(value) => Some(value.clone()),
+      None => None,
+    }
+  }
+
+  fn peek_is(&self, token: token::Token) -> bool {
+    let next_token = self.peek();
+
+    if next_token.is_none() {
+      return false;
+    }
+
+    token == next_token.unwrap()
+  }
+
   pub fn parse_name(&mut self) -> ParserResult<String> {
+    // TODO: Illegal/unrecognized tokens are also represented under 'Identifier'.
+
     // TODO: Empty string?
     assert!(match &self.tokens[self.index] {
       token::Token::Identifier(_) => true,
@@ -99,19 +118,28 @@ impl Parser {
   pub fn parse_block(&mut self) -> ParserResult<block::Block> {
     skip_past!(self, token::Token::SymbolBraceL);
 
-    // TODO: Do not depend on an EOF token, (can't enforce its presence in tokens vector).
+    let mut statements = vec![];
+
     while !self.is(token::Token::SymbolBraceR) && !self.is_eof() {
-      // TODO: Parse expressions.
+      statements.push(match self.tokens[self.index] {
+        token::Token::KeywordReturn => {
+          block::AnyStatementNode::ReturnStmt(self.parse_return_stmt()?)
+        }
+        _ => {
+          return Err(diagnostic::Diagnostic {
+            message: format!(
+              "unexpected token `{:?}`, expected statements",
+              self.tokens[self.index]
+            ),
+            severity: diagnostic::DiagnosticSeverity::Error,
+          })
+        }
+      });
     }
 
     skip_past!(self, token::Token::SymbolBraceR);
 
-    // TODO:
-    // if self.is(token::Token::EOF) {
-    //   return None;
-    // }
-
-    Ok(block::Block {})
+    Ok(block::Block { statements })
   }
 
   pub fn parse_int_kind(&mut self) -> ParserResult<int_kind::IntKind> {
@@ -222,6 +250,8 @@ impl Parser {
 
     // TODO: Verify condition.
     while !self.is(token::Token::SymbolBraceR) && !self.is_eof() {
+      // TODO: Support for 'pub' visibility modifier.
+
       let top_level_node = match self.tokens[self.index] {
         token::Token::KeywordFn => namespace::TopLevelNode::Function(self.parse_function()?),
         token::Token::KeywordExtern => namespace::TopLevelNode::External(self.parse_external()?),
@@ -233,14 +263,22 @@ impl Parser {
         }
       };
 
-      println!("parsed top-level!!");
-
       namespace
         .symbol_table
         .insert(find_top_level_node_name(&top_level_node), top_level_node);
     }
     skip_past!(self, token::Token::SymbolBraceR);
     Ok(namespace)
+  }
+
+  pub fn parse_return_stmt(&mut self) -> ParserResult<block::ReturnStmt> {
+    skip_past!(self, token::Token::KeywordReturn);
+
+    // TODO: Support for return value.
+
+    skip_past!(self, token::Token::SymbolSemiColon);
+
+    Ok(block::ReturnStmt { value: None })
   }
 }
 
@@ -286,11 +324,24 @@ mod tests {
   }
 
   #[test]
+  fn parser_is_eof() {
+    let mut parser = Parser::new(vec![]);
+
+    assert_eq!(true, parser.is_eof());
+    parser.tokens.push(token::Token::KeywordFn);
+    assert_eq!(true, parser.is_eof());
+    parser.tokens.push(token::Token::KeywordFn);
+    assert_eq!(false, parser.is_eof());
+    parser.skip();
+    assert_eq!(true, parser.is_eof());
+  }
+
+  #[test]
   fn parser_parse_name() {
     let mut parser = Parser::new(vec![token::Token::Identifier(String::from("foo"))]);
     let name = parser.parse_name();
 
-    assert_eq!(false, name.is_err());
+    assert_eq!(true, name.is_ok());
     assert_eq!(String::from("foo"), name.ok().unwrap().as_str());
   }
 
@@ -299,17 +350,64 @@ mod tests {
     let mut parser = Parser::new(vec![token::Token::SymbolBraceL, token::Token::SymbolBraceR]);
     let block = parser.parse_block();
 
-    assert_eq!(false, block.is_err());
+    assert_eq!(true, block.is_ok());
   }
 
   #[test]
-  fn parse_kind() {
+  fn parser_parse_int_kind() {
     let mut parser = Parser::new(vec![token::Token::Identifier(String::from("i8"))]);
     let int_kind = parser.parse_int_kind();
 
-    assert_eq!(false, int_kind.is_err());
+    assert_eq!(true, int_kind.is_ok());
     assert_eq!(int_kind.ok().unwrap().size, int_kind::IntSize::Signed8);
   }
 
-  // TODO: Add missing tests (is_eof, parse_namespace, etc.).
+  #[test]
+  fn parse_void_kind() {
+    let mut parser = Parser::new(vec![token::Token::TypeVoid]);
+    let void_kind = parser.parse_void_kind();
+
+    assert_eq!(true, void_kind.is_ok());
+  }
+
+  #[test]
+  fn parser_parse_namespace() {
+    let mut parser = Parser::new(vec![
+      token::Token::KeywordNamespace,
+      token::Token::Identifier(String::from("test")),
+      token::Token::SymbolBraceL,
+      token::Token::SymbolBraceR,
+    ]);
+
+    let namespace = parser.parse_namespace();
+
+    assert_eq!(true, namespace.is_ok());
+    assert_eq!(String::from("test"), namespace.unwrap().name);
+  }
+
+  #[test]
+  fn parse_external() {
+    let mut parser = Parser::new(vec![
+      token::Token::KeywordExtern,
+      token::Token::Identifier(String::from("test")),
+      token::Token::SymbolParenthesesL,
+      token::Token::SymbolParenthesesR,
+      token::Token::SymbolTilde,
+      token::Token::TypeVoid,
+      token::Token::SymbolSemiColon,
+    ]);
+
+    let external = parser.parse_external();
+
+    assert_eq!(true, external.is_ok());
+
+    let external_prototype = &external.unwrap().prototype;
+
+    assert_eq!(String::from("test"), external_prototype.name);
+    assert_eq!(false, external_prototype.is_variadic);
+
+    // TODO: Verify return kind.
+  }
+
+  // TODO: Add missing tests (is_eof, etc.).
 }

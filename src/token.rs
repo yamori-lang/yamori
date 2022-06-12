@@ -1,6 +1,6 @@
 use crate::diagnostic;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 
 pub enum Token {
   Identifier(String),
@@ -16,6 +16,8 @@ pub enum Token {
   SymbolParenthesesL,
   SymbolParenthesesR,
   SymbolTilde,
+  SymbolSemiColon,
+  KeywordReturn,
 }
 
 pub fn get_keyword_or_type_token(identifier_str: &str) -> Result<Token, diagnostic::Diagnostic> {
@@ -26,6 +28,7 @@ pub fn get_keyword_or_type_token(identifier_str: &str) -> Result<Token, diagnost
     "void" => Token::TypeVoid,
     "i32" => Token::TypeInt32,
     "namespace" => Token::KeywordNamespace,
+    "return" => Token::KeywordReturn,
     _ => {
       return Err(diagnostic::Diagnostic {
         message: format!("identifier `{}` is not a keyword", identifier_str),
