@@ -2,8 +2,8 @@
 mod tests {
   #[test]
   fn function_lowering_test() {
-    let llvm_context = inkwell::context::Context::create();
-    let llvm_module = llvm_context.create_module("test");
+    // let llvm_context = inkwell::context::Context::create();
+    // let llvm_module = llvm_context.create_module("test");
 
     // let llvm_lowering_pass =
     //   yamori::llvm_lowering_pass::LlvmLoweringPass::new(&llvm_context, &llvm_module);
