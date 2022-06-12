@@ -100,7 +100,7 @@ impl Parser {
     skip_past!(self, token::Token::SymbolBraceL);
 
     // TODO: Do not depend on an EOF token, (can't enforce its presence in tokens vector).
-    while !self.is(token::Token::SymbolBraceR) && !self.is(token::Token::EOF) {
+    while !self.is(token::Token::SymbolBraceR) && !self.is_eof() {
       // TODO: Parse expressions.
     }
 
