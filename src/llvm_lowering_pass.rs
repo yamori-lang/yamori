@@ -1,4 +1,6 @@
-use crate::{diagnostic, function, int_kind, node, pass, pass::Pass, prototype, void_kind};
+use crate::{
+  diagnostic, function, int_kind, namespace, node, pass, pass::Pass, prototype, void_kind,
+};
 use inkwell::types::AnyType;
 
 macro_rules! assert {
@@ -38,12 +40,12 @@ impl<'a> LlvmLoweringPass<'a> {
   /// into the LLVM types map.
   fn visit_or_retrieve_type(
     &mut self,
-    node: node::AnyKindNode,
-  ) -> Result<Option<&inkwell::types::AnyTypeEnum>, diagnostic::Diagnostic> {
+    node: &node::AnyKindNode,
+  ) -> Result<Option<&inkwell::types::AnyTypeEnum<'a>>, diagnostic::Diagnostic> {
     if !self.llvm_type_map.contains_key(&node) {
       match node {
-        node::AnyKindNode::IntKind(value) => self.visit_int_kind(&value),
-        node::AnyKindNode::VoidKind(value) => self.visit_void_kind(&value),
+        node::AnyKindNode::IntKind(value) => self.visit_int_kind(&value)?,
+        node::AnyKindNode::VoidKind(value) => self.visit_void_kind(&value)?,
       };
     }
 
@@ -89,7 +91,7 @@ impl<'a> pass::Pass<'a> for LlvmLoweringPass<'a> {
   fn visit_function(&mut self, function: &function::Function) -> pass::PassResult {
     // TODO:
 
-    let llvm_return_type = self.visit_or_retrieve_type(&function.prototype.return_kind);
+    let llvm_return_type = self.visit_or_retrieve_type(&function.prototype.return_kind)?;
 
     assert!(llvm_return_type.is_some());
 
@@ -117,6 +119,17 @@ impl<'a> pass::Pass<'a> for LlvmLoweringPass<'a> {
       llvm_function_type,
       Some(inkwell::module::Linkage::Private),
     );
+
+    Ok(())
+  }
+
+  fn visit_namespace(&mut self, namespace: &namespace::Namespace) -> pass::PassResult {
+    for top_level_node in namespace.symbol_table.values() {
+      match top_level_node {
+        namespace::TopLevelNode::Function(function) => self.visit(function)?,
+        namespace::TopLevelNode::External(external) => self.visit(external)?,
+      };
+    }
 
     Ok(())
   }

@@ -1,6 +1,3 @@
-extern crate inkwell;
-extern crate ionlang;
-
 #[cfg(test)]
 mod tests {
   #[test]
@@ -9,7 +6,7 @@ mod tests {
     let llvm_module = llvm_context.create_module("test");
 
     // let llvm_lowering_pass =
-    //   ionlang::llvm_lowering_pass::LlvmLoweringPass::new(&llvm_context, &llvm_module);
+    //   yamori::llvm_lowering_pass::LlvmLoweringPass::new(&llvm_context, &llvm_module);
 
     // TODO: Continue implementation.
     // llvm_lowering_pass.visit_function(function: &function::Function)
