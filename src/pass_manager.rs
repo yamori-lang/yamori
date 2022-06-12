@@ -65,6 +65,13 @@ mod tests {
     //
   }
 
+  impl node::Node for TestNode {
+    // TODO: Isn't this redundant?
+    fn accept(&mut self, _: &mut dyn pass::Pass) -> pass::PassResult {
+      Ok(())
+    }
+  }
+
   #[test]
   fn pass_manager_proper_initial_values() {
     assert_eq!(true, PassManager::new().passes.is_empty());
