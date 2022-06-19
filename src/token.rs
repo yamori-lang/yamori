@@ -5,6 +5,7 @@ use crate::diagnostic;
 pub enum Token {
   Identifier(String),
   Integer(Vec<char>),
+  LiteralInt(Vec<char>),
   KeywordPub,
   KeywordFn,
   KeywordExtern,
