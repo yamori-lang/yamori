@@ -18,7 +18,7 @@ macro_rules! assert {
 pub struct LlvmLoweringPass<'a> {
   llvm_context: &'a inkwell::context::Context,
   pub llvm_module: inkwell::module::Module<'a>,
-  llvm_type_map: std::collections::HashMap<node::AnyKindNode, inkwell::types::AnyTypeEnum<'a>>,
+  llvm_type_map: std::collections::HashMap<node::AnyLiteralNode, inkwell::types::AnyTypeEnum<'a>>,
   llvm_value_map:
     std::collections::HashMap<block::AnyExprNode, inkwell::values::BasicValueEnum<'a>>,
   llvm_function_buffer: Option<inkwell::values::FunctionValue<'a>>,
@@ -70,12 +70,11 @@ impl<'a> LlvmLoweringPass<'a> {
   // into the LLVM types map.
   fn visit_or_retrieve_type(
     &mut self,
-    node: &node::AnyKindNode,
+    node: &node::AnyLiteralNode,
   ) -> Result<Option<&inkwell::types::AnyTypeEnum<'a>>, diagnostic::Diagnostic> {
     if !self.llvm_type_map.contains_key(&node) {
       match node {
-        node::AnyKindNode::IntKind(value) => self.visit_int_kind(&value)?,
-        node::AnyKindNode::VoidKind(value) => self.visit_void_kind(&value)?,
+        node::AnyLiteralNode::BoolLiteral(value) => self.visit_bool_literal(&value)?,
       };
     }
 
@@ -231,17 +230,29 @@ impl<'a> pass::Pass<'a> for LlvmLoweringPass<'a> {
   fn visit_return_stmt(&mut self, return_stmt: &block::ReturnStmt) -> pass::PassResult {
     assert!(self.llvm_basic_block_buffer.is_some());
 
+    let value = if return_stmt.value.is_some() {
+      self.visit_or_retrieve_value(&return_stmt.value.as_ref().unwrap())?
+    } else {
+      None
+    };
+
     self
       .llvm_builder_buffer
-      .build_return(if return_stmt.value.is_some() {
-        Some(
-          self
-            .visit_or_retrieve_value(&return_stmt.value.as_ref().unwrap())?
-            .unwrap(),
-        )
-      } else {
-        None
-      });
+      .build_return(Some(&value.unwrap().into_int_value()));
+
+    Ok(())
+  }
+
+  fn visit_bool_literal(&mut self, bool_literal: &node::BoolLiteral) -> pass::PassResult {
+    self.llvm_value_map.insert(
+      node::AnyLiteralNode::BoolLiteral(*bool_literal),
+      inkwell::values::BasicValueEnum::IntValue(
+        self
+          .llvm_context
+          .bool_type()
+          .const_int(bool_literal.value as u64, false),
+      ),
+    );
 
     Ok(())
   }
