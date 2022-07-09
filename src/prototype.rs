@@ -1,10 +1,12 @@
 use crate::node;
 use crate::pass;
 
+pub type Parameter = (String, node::KindGroup);
+
 #[derive(Hash, Eq, PartialEq, Debug)]
 pub struct Prototype {
   pub name: String,
-  // pub args: (node::AnyKindNode, String),
+  pub parameters: Vec<Parameter>,
   pub is_variadic: bool,
   pub return_kind: node::AnyKindNode,
 }
