@@ -6,6 +6,7 @@ pub enum Token {
   Identifier(String),
   Integer(Vec<char>),
   LiteralInt(Vec<char>),
+  LiteralBool(bool),
   KeywordPub,
   KeywordFn,
   KeywordExtern,
