@@ -18,9 +18,9 @@ macro_rules! assert {
 pub struct LlvmLoweringPass<'a> {
   llvm_context: &'a inkwell::context::Context,
   pub llvm_module: inkwell::module::Module<'a>,
-  llvm_type_map: std::collections::HashMap<node::AnyLiteralNode, inkwell::types::AnyTypeEnum<'a>>,
+  llvm_type_map: std::collections::HashMap<node::AnyKindNode, inkwell::types::AnyTypeEnum<'a>>,
   llvm_value_map:
-    std::collections::HashMap<block::AnyExprNode, inkwell::values::BasicValueEnum<'a>>,
+    std::collections::HashMap<node::AnyLiteralNode, inkwell::values::BasicValueEnum<'a>>,
   llvm_function_buffer: Option<inkwell::values::FunctionValue<'a>>,
   llvm_basic_block_buffer: Option<inkwell::basic_block::BasicBlock<'a>>,
   llvm_builder_buffer: inkwell::builder::Builder<'a>,
@@ -70,11 +70,12 @@ impl<'a> LlvmLoweringPass<'a> {
   // into the LLVM types map.
   fn visit_or_retrieve_type(
     &mut self,
-    node: &node::AnyLiteralNode,
+    node: &node::AnyKindNode,
   ) -> Result<Option<&inkwell::types::AnyTypeEnum<'a>>, diagnostic::Diagnostic> {
-    if !self.llvm_type_map.contains_key(&node) {
+    if !self.llvm_type_map.contains_key(node) {
       match node {
-        node::AnyLiteralNode::BoolLiteral(value) => self.visit_bool_literal(&value)?,
+        node::AnyKindNode::IntKind(value) => self.visit_int_kind(&value)?,
+        node::AnyKindNode::VoidKind(value) => self.visit_void_kind(&value)?,
       };
     }
 
@@ -89,7 +90,7 @@ impl<'a> LlvmLoweringPass<'a> {
   // into the LLVM values map.
   fn visit_or_retrieve_value(
     &self,
-    node: &block::AnyExprNode,
+    node: &node::AnyLiteralNode,
   ) -> Result<Option<&inkwell::values::BasicValueEnum<'a>>, diagnostic::Diagnostic> {
     if !self.llvm_value_map.contains_key(node) {
       match node {
@@ -129,12 +130,6 @@ impl<'a> pass::Pass<'a> for LlvmLoweringPass<'a> {
   }
 
   fn visit_void_kind(&mut self, void_kind: &void_kind::VoidKind) -> pass::PassResult {
-    let v = node::AnyKindNode::VoidKind(*void_kind);
-
-    self
-      .llvm_type_map
-      .insert(v, self.llvm_context.void_type().as_any_type_enum());
-
     self.llvm_type_map.insert(
       node::AnyKindNode::VoidKind(*void_kind),
       self.llvm_context.void_type().as_any_type_enum(),
@@ -238,7 +233,7 @@ impl<'a> pass::Pass<'a> for LlvmLoweringPass<'a> {
     };
 
     // FIXME: Solve error out.
-    self.llvm_builder_buffer.build_return(Some(&value));
+    // self.llvm_builder_buffer.build_return(Some(&value));
 
     Ok(())
   }
@@ -327,7 +322,7 @@ mod tests {
     let visit_function_result = llvm_lowering_pass.visit_function(&function::Function {
       is_public: false,
       prototype: prototype::Prototype {
-        name: "test".to_string(),
+        name: String::from("foo"),
         return_kind_group: node::KindGroup {
           kind: node::AnyKindNode::VoidKind(void_kind::VoidKind {}),
           is_reference: false,
@@ -340,6 +335,6 @@ mod tests {
     });
 
     assert_eq!(true, visit_function_result.is_ok());
-    assert_eq!(llvm_lowering_pass.llvm_value_map.len(), 1);
+    assert_eq!(true, llvm_lowering_pass.llvm_function_buffer.is_some());
   }
 }

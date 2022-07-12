@@ -56,7 +56,7 @@ fn find_top_level_node_name(top_level_node: &namespace::TopLevelNode) -> String 
 }
 
 impl Parser {
-  fn new(tokens: Vec<token::Token>) -> Self {
+  pub fn new(tokens: Vec<token::Token>) -> Self {
     Self { tokens, index: 0 }
   }
 
@@ -103,12 +103,11 @@ impl Parser {
   pub fn parse_name(&mut self) -> ParserResult<String> {
     // TODO: Illegal/unrecognized tokens are also represented under 'Identifier'.
 
-    // TODO: Empty string?
+    // TODO: Wrong error message.
     assert!(match &self.tokens[self.index] {
       token::Token::Identifier(_) => true,
       _ => false,
     });
-    // skip_past!(self, token::Token::Identifier(String::from("")));
 
     let name = {
       match &self.tokens[self.index] {
@@ -151,35 +150,23 @@ impl Parser {
   }
 
   pub fn parse_int_kind(&mut self) -> ParserResult<int_kind::IntKind> {
+    // TODO: Simplify weird, unreadable logic?
     let token = match self.skip() {
       true => &self.tokens[self.index - 1],
       false => &self.tokens[self.index],
     };
 
-    match token {
-      token::Token::Identifier(value) => Ok(int_kind::IntKind {
-        size: match value.as_str() {
-          "i8" => int_kind::IntSize::Signed8,
-          "i16" => int_kind::IntSize::Signed16,
-          "i32" => int_kind::IntSize::Signed32,
-          "i64" => int_kind::IntSize::Signed64,
-          "i128" => int_kind::IntSize::Signed128,
-          _ => {
-            return Err(diagnostic::Diagnostic {
-              // TODO:
-              message: String::from(format!("invalid integer type name")),
-              severity: diagnostic::DiagnosticSeverity::Error,
-            });
-          }
-        },
-      }),
+    let size = match token {
+      token::Token::TypeInt32 => int_kind::IntSize::Signed32,
       _ => {
         return Err(diagnostic::Diagnostic {
-          message: String::from("invalid"),
+          message: format!("not yet implemented"),
           severity: diagnostic::DiagnosticSeverity::Error,
         })
       }
-    }
+    };
+
+    Ok(int_kind::IntKind { size })
   }
 
   pub fn parse_void_kind(&mut self) -> ParserResult<void_kind::VoidKind> {
@@ -188,7 +175,7 @@ impl Parser {
     Ok(void_kind::VoidKind {})
   }
 
-  pub fn parse_kind_group(&mut self) -> ParserResult<node::KindNode> {
+  pub fn parse_kind_group(&mut self) -> ParserResult<node::KindGroup> {
     let mut is_reference = false;
     let mut is_mutable = false;
 
@@ -202,26 +189,28 @@ impl Parser {
       self.skip();
     }
 
+    // TODO: Check if the index is valid?
     // TODO: Support for more types.
     let kind = match self.tokens[self.index] {
       token::Token::TypeVoid => node::AnyKindNode::VoidKind(self.parse_void_kind()?),
       token::Token::TypeInt32 => node::AnyKindNode::IntKind(self.parse_int_kind()?),
       _ => {
         return Err(diagnostic::Diagnostic {
+          // TODO: Error message.
           message: String::from("foo"),
           severity: diagnostic::DiagnosticSeverity::Internal,
-        })
+        });
       }
     };
 
     Ok(node::KindGroup {
+      kind,
       is_reference,
       is_mutable,
-      kind,
     })
   }
 
-  pub fn parse_parameter() -> ParserResult<prototype::Parameter> {
+  pub fn parse_parameter(&mut self) -> ParserResult<prototype::Parameter> {
     let name = self.parse_name()?;
 
     skip_past!(self, token::Token::SymbolColon);
@@ -236,8 +225,8 @@ impl Parser {
 
     skip_past!(self, token::Token::SymbolParenthesesL);
 
-    let parameters = vec![];
-    let is_variadic = false;
+    let mut parameters = vec![];
+    let mut is_variadic = false;
 
     // TODO: Analyze, and remove posibility of lonely comma.
     while !self.is(token::Token::SymbolParenthesesR) && !self.is_eof() {
@@ -260,12 +249,12 @@ impl Parser {
     skip_past!(self, token::Token::SymbolParenthesesR);
     skip_past!(self, token::Token::SymbolTilde);
 
-    let return_kind = self.parse_kind_group()?;
+    let return_kind_group = self.parse_kind_group()?;
 
     Ok(prototype::Prototype {
       name,
       parameters,
-      is_variadic: false,
+      is_variadic,
       return_kind_group,
     })
   }
@@ -293,14 +282,20 @@ impl Parser {
   pub fn parse_external(&mut self) -> ParserResult<external::External> {
     skip_past!(self, token::Token::KeywordExtern);
 
-    Ok(external::External {
-      prototype: self.parse_prototype()?,
-    })
+    let prototype = self.parse_prototype()?;
+
+    skip_past!(self, token::Token::SymbolSemiColon);
+
+    Ok(external::External { prototype })
   }
+
   pub fn parse_namespace(&mut self) -> ParserResult<namespace::Namespace> {
     skip_past!(self, token::Token::KeywordNamespace);
+
     let name = self.parse_name()?;
+
     skip_past!(self, token::Token::SymbolBraceL);
+
     let mut namespace = namespace::Namespace::new(name);
 
     // TODO: Verify condition.
@@ -322,7 +317,9 @@ impl Parser {
         .symbol_table
         .insert(find_top_level_node_name(&top_level_node), top_level_node);
     }
+
     skip_past!(self, token::Token::SymbolBraceR);
+
     Ok(namespace)
   }
 
@@ -430,7 +427,7 @@ mod tests {
     let name = parser.parse_name();
 
     assert_eq!(true, name.is_ok());
-    assert_eq!(String::from("foo"), name.ok().unwrap().as_str());
+    assert_eq!("foo", name.ok().unwrap().as_str());
   }
 
   #[test]
@@ -443,11 +440,11 @@ mod tests {
 
   #[test]
   fn parser_parse_int_kind() {
-    let mut parser = Parser::new(vec![token::Token::Identifier(String::from("i8"))]);
+    let mut parser = Parser::new(vec![token::Token::TypeInt32]);
     let int_kind = parser.parse_int_kind();
 
     assert_eq!(true, int_kind.is_ok());
-    assert_eq!(int_kind.ok().unwrap().size, int_kind::IntSize::Signed8);
+    assert_eq!(int_kind.ok().unwrap().size, int_kind::IntSize::Signed32);
   }
 
   #[test]
@@ -513,5 +510,80 @@ mod tests {
     assert_eq!(true, false_bool_literal.is_ok());
     assert_eq!(false, false_bool_literal.unwrap().value);
   }
+
+  #[test]
+  fn parse_parameter() {
+    let mut parser = Parser::new(vec![
+      token::Token::Identifier(String::from("foo")),
+      token::Token::SymbolColon,
+      token::Token::TypeInt32,
+    ]);
+
+    let parameter = parser.parse_parameter();
+
+    assert_eq!(true, parameter.is_ok());
+    assert_eq!(String::from("foo"), parameter.unwrap().0);
+  }
+
+  #[test]
+  fn parse_kind_group() {
+    let mut parser = Parser::new(vec![token::Token::TypeInt32]);
+
+    let kind_group_result = parser.parse_kind_group();
+
+    assert_eq!(true, kind_group_result.is_ok());
+
+    let kind_group_value = kind_group_result.unwrap();
+
+    assert_eq!(false, kind_group_value.is_reference);
+    assert_eq!(false, kind_group_value.is_mutable);
+  }
+
+  #[test]
+  fn parse_kind_group_reference() {
+    let mut parser = Parser::new(vec![token::Token::SymbolAmpersand, token::Token::TypeInt32]);
+
+    let kind_group_result = parser.parse_kind_group();
+
+    assert_eq!(true, kind_group_result.is_ok());
+
+    let kind_group_value = kind_group_result.unwrap();
+
+    assert_eq!(true, kind_group_value.is_reference);
+    assert_eq!(false, kind_group_value.is_mutable);
+  }
+
+  #[test]
+  fn parse_kind_group_mutable() {
+    let mut parser = Parser::new(vec![token::Token::KeywordMut, token::Token::TypeInt32]);
+
+    let kind_group_result = parser.parse_kind_group();
+
+    assert_eq!(true, kind_group_result.is_ok());
+
+    let kind_group_value = kind_group_result.unwrap();
+
+    assert_eq!(false, kind_group_value.is_reference);
+    assert_eq!(true, kind_group_value.is_mutable);
+  }
+
+  #[test]
+  fn parse_kind_group_mutable_reference() {
+    let mut parser = Parser::new(vec![
+      token::Token::SymbolAmpersand,
+      token::Token::KeywordMut,
+      token::Token::TypeInt32,
+    ]);
+
+    let kind_group_result = parser.parse_kind_group();
+
+    assert_eq!(true, kind_group_result.is_ok());
+
+    let kind_group_value = kind_group_result.unwrap();
+
+    assert_eq!(true, kind_group_value.is_reference);
+    assert_eq!(true, kind_group_value.is_mutable);
+  }
+
   // TODO: Add missing tests (is_eof, etc.).
 }

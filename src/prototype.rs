@@ -8,7 +8,7 @@ pub struct Prototype {
   pub name: String,
   pub parameters: Vec<Parameter>,
   pub is_variadic: bool,
-  pub return_kind: node::AnyKindNode,
+  pub return_kind_group: node::KindGroup,
 }
 
 impl node::Node for Prototype {
